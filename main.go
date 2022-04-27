@@ -10,12 +10,13 @@ import (
 )
 
 
-var wsConn *websocket.Conn
-
-wsUpgrader := websocket.Upgrader { 
+var (
+	wsConn *websocket.Conn
+	wsUpgrader = websocket.Upgrader { 
 	ReadBufferSize: 1024,
 	WriteBufferSize: 1024, 
 }
+)
 
 type Message struct {
 	msg string `json:"msg"`
@@ -23,12 +24,13 @@ type Message struct {
 }
 
 func wsHandler(w http.ResponseWriter,  r *http.Request){ 
-	wsUpgrader.CheckOrigin = func(r *http.Request){ 
+
+	wsUpgrader.CheckOrigin = func(r *http.Request) bool{ 
 		return true
 	}
 
 	wsConn, err := wsUpgrader.Upgrade(w, r, nil)
-	if err!= nill {
+	if err!= nil {
 		fmt.Printf("error upgrading: %s\n", err.Error())
 		return
 	}

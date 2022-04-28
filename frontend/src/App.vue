@@ -1,21 +1,19 @@
 <template>
 	<div class="chatbox">
 		<h2>Anonymous Chat App</h2>
-		<div v-for="message in messages" :key="message.time">
+		<div v-for="message in messages" :key="message.msg">
 			<div v-if="message.user == this.user">
 				<!-- Add CSS -->
-				<p>{{ message.msg }}</p>
+				<p>{{ message.Text }}</p>
 			</div>
 			<div v-else>
 				<!-- Add CSS -->
-				<p>{{ message.msg }} test</p>
+				<p>{{ message.user }} {{ message.Text }}</p>
 			</div>
 		</div>
 		<div>
-			<form ref="submitForm" @submit="sendMessage">
-				<input v-model="message" type="text" />
-				<button>Submit</button>
-			</form>
+			<input v-model="message" type="text" />
+			<button v-on:click="sendMessage">Submit</button>
 		</div>
 	</div>
 </template>
@@ -27,12 +25,13 @@ export default {
 		return {
 			message: '',
 			messages: [],
-			user: Math.random().toString(36).substring(2, 7),
+			user: '',
 			socket: null,
 		};
 	},
 	mounted() {
 		if (this.socket == null) {
+			this.user = Math.random().toString(36).substring(2, 7);
 			this.socket = new WebSocket('ws://localhost:4500/socket');
 			this.socket.onmessage = msg => this.acceptMessage(msg);
 		}
@@ -43,11 +42,11 @@ export default {
 				Text: this.message,
 				User: this.user,
 			};
-			console.log(JSON.stringify(msg));
 			this.socket.send(JSON.stringify(msg));
 		},
 		acceptMessage(msg) {
 			console.log(msg);
+			this.messages.push(JSON.parse(msg.data));
 		},
 	},
 };

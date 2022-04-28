@@ -30,7 +30,7 @@ func wsHandler(w http.ResponseWriter,  r *http.Request){
 	}
 
 	var err error
-	wsConn, err := wsUpgrader.Upgrade(w, r, nil)
+	wsConn, err = wsUpgrader.Upgrade(w, r, nil)
 	if err!= nil {
 		fmt.Printf("error upgrading: %s\n", err.Error())
 		return
@@ -48,6 +48,15 @@ func wsHandler(w http.ResponseWriter,  r *http.Request){
 		}
 
 		fmt.Printf("Message Received: %s\n", msg.Text)
+		SendMessage(msg)
+	}
+}
+
+func SendMessage(msg Message) {
+	err := wsConn.WriteJSON(msg)
+	if err != nil {
+		fmt.Printf("error sending msg: %s\n", err.Error())
+		return
 	}
 }
 

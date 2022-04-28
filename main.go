@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorila/mux"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
 
@@ -19,8 +19,8 @@ var (
 )
 
 type Message struct {
-	msg string `json:"msg"`
-	user string `json:"user"`
+	Text string `json:"Text"`
+	User string `json:"User"`
 }
 
 func wsHandler(w http.ResponseWriter,  r *http.Request){ 
@@ -29,6 +29,7 @@ func wsHandler(w http.ResponseWriter,  r *http.Request){
 		return true
 	}
 
+	var err error
 	wsConn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err!= nil {
 		fmt.Printf("error upgrading: %s\n", err.Error())
@@ -46,7 +47,7 @@ func wsHandler(w http.ResponseWriter,  r *http.Request){
 			break
 		}
 
-		fmt.Printf("Message Received: %s\n", msg.msg)
+		fmt.Printf("Message Received: %s\n", msg.Text)
 	}
 }
 

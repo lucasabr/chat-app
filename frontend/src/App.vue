@@ -8,12 +8,14 @@
 			</div>
 			<div v-else>
 				<!-- Add CSS -->
-				<p>{{ message.msg }}</p>
+				<p>{{ message.msg }} test</p>
 			</div>
 		</div>
 		<div>
-			<input />
-			<button>Submit</button>
+			<form ref="submitForm" @submit="sendMessage">
+				<input v-model="message" type="text" />
+				<button>Submit</button>
+			</form>
 		</div>
 	</div>
 </template>
@@ -23,17 +25,27 @@ export default {
 	name: 'App',
 	data() {
 		return {
+			message: '',
 			messages: [],
 			user: Math.random().toString(36).substring(2, 7),
 			socket: null,
 		};
 	},
 	mounted() {
-		this.socket = new WebSocket('ws://localhost:4500/socket');
-		this.socket.onmessage = msg => this.acceptMessage(msg);
+		if (this.socket == null) {
+			this.socket = new WebSocket('ws://localhost:4500/socket');
+			this.socket.onmessage = msg => this.acceptMessage(msg);
+		}
 	},
 	methods: {
-		sendMessage() {},
+		sendMessage() {
+			let msg = {
+				Text: this.message,
+				User: this.user,
+			};
+			console.log(JSON.stringify(msg));
+			this.socket.send(JSON.stringify(msg));
+		},
 		acceptMessage(msg) {
 			console.log(msg);
 		},

@@ -4,11 +4,11 @@
 		<div v-for="message in messages" :key="message.msg">
 			<div v-if="message.user == this.user">
 				<!-- Add CSS -->
-				<p>{{ message.Text }}</p>
+				<p>{{ message.User }}: {{ message.Text }}</p>
 			</div>
 			<div v-else>
 				<!-- Add CSS -->
-				<p>{{ message.user }} {{ message.Text }}</p>
+				<p>{{ message.User }}: {{ message.Text }}</p>
 			</div>
 		</div>
 		<div>
@@ -32,7 +32,7 @@ export default {
 	mounted() {
 		if (this.socket == null) {
 			this.user = Math.random().toString(36).substring(2, 7);
-			this.socket = new WebSocket('ws://localhost:4500/socket');
+			this.socket = new WebSocket('ws://localhost:4500/socket/' + this.user);
 			this.socket.onmessage = msg => this.acceptMessage(msg);
 		}
 	},

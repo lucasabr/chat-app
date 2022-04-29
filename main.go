@@ -11,7 +11,8 @@ import (
 
 
 var (
-	wsConn *websocket.Conn
+	connToName = make(map[*websocket.Conn]string)
+	userToConn = make(map[string]*websocket.Conn)
 	wsUpgrader = websocket.Upgrader { 
 	ReadBufferSize: 1024,
 	WriteBufferSize: 1024, 
@@ -30,12 +31,17 @@ func wsHandler(w http.ResponseWriter,  r *http.Request){
 	}
 
 	var err error
-	wsConn, err = wsUpgrader.Upgrade(w, r, nil)
+	wsConn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err!= nil {
 		fmt.Printf("error upgrading: %s\n", err.Error())
 		return
 	}
 
+	params := mux.Vars(r)
+	user := params["user"]
+	connToName[wsConn] = user
+	userToConn[user] = wsConn
+	
 	defer wsConn.Close()
 
 	for {
@@ -43,28 +49,39 @@ func wsHandler(w http.ResponseWriter,  r *http.Request){
 		
 		err := wsConn.ReadJSON(&msg)
 		if err != nil {
-			fmt.Printf("Error reading JSON %s\n", err.Error())
+			disconnect(wsConn)
 			break
 		}
 
-		fmt.Printf("Message Received: %s\n", msg.Text)
-		SendMessage(msg)
+
+		dispatchMessages(msg)
 	}
 }
 
-func SendMessage(msg Message) {
-	err := wsConn.WriteJSON(msg)
-	if err != nil {
-		fmt.Printf("error sending msg: %s\n", err.Error())
-		return
+func disconnect(ws *websocket.Conn) {
+	user := connToName[ws]
+	delete(connToName, ws)
+	delete(userToConn, user)
+}
+
+
+
+func dispatchMessages(msg Message) {
+	for key := range connToName {
+		err := key.WriteJSON(msg)
+		if err != nil {
+			fmt.Printf("error sending msg: %s\n", err.Error())
+			return
+		}
 	}
+
 }
 
 func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/socket", wsHandler)
+	router.HandleFunc("/socket/{user}", wsHandler)
 
 	log.Fatal(http.ListenAndServe(":4500", router))
 }

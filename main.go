@@ -14,14 +14,16 @@ var (
 	connToName = make(map[*websocket.Conn]string)
 	userToConn = make(map[string]*websocket.Conn)
 	wsUpgrader = websocket.Upgrader { 
-	ReadBufferSize: 1024,
-	WriteBufferSize: 1024, 
+	ReadBufferSize: 1024*100,
+	WriteBufferSize: 1024*100, 
 }
 )
 
 type Message struct {
+	Type string `json:"Type"`
 	Text string `json:"Text"`
 	User string `json:"User"`
+	Chunks string `json:"Chunks"`
 }
 
 func wsHandler(w http.ResponseWriter,  r *http.Request){ 

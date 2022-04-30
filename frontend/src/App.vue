@@ -1,10 +1,11 @@
 <template>
-	<div class="chatbox">
+	<div id="main" class="chatbox">
 		<h2>Anonymous Chat App</h2>
 		<div v-for="message in messages" :key="message.msg">
-			<div v-if="message.user == this.user">
+			<div v-if="message.User == this.user">
 				<!-- Add CSS -->
-				<p>{{ message.User }}: {{ message.Text }}</p>
+				<p v-if="message.Type == 'message'">{{ message.User }}: {{ message.Text }}</p>
+				<audio v-else></audio>
 			</div>
 			<div v-else>
 				<!-- Add CSS -->
@@ -14,6 +15,10 @@
 		<div>
 			<input v-model="message" type="text" />
 			<button v-on:click="sendMessage">Submit</button>
+		</div>
+		<div>
+			<button v-on:click="toggleRec">Start Recording</button>
+			<button v-on:click="sendAudioMessage">Send</button>
 		</div>
 	</div>
 </template>
@@ -27,6 +32,8 @@ export default {
 			messages: [],
 			user: '',
 			socket: null,
+			mediaRec: null,
+			chunks: [],
 		};
 	},
 	mounted() {
@@ -35,18 +42,67 @@ export default {
 			this.socket = new WebSocket('ws://localhost:4500/socket/' + this.user);
 			this.socket.onmessage = msg => this.acceptMessage(msg);
 		}
+		if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+			navigator.mediaDevices
+				.getUserMedia({
+					audio: true,
+				})
+				.then(stream => {
+					if (this.mediaRec == null) {
+						this.mediaRec = new MediaRecorder(stream);
+						this.mediaRec.ondataavailable = e => this.chunks.push(e.data);
+						this.mediaRec.onstop = e => {
+							console.log(e);
+							const audio = document.createElement('audio');
+							const blob = new Blob(this.chunks, { type: 'audio/ogg; codecs=opus' });
+							this.chunks = [];
+							const audioURL = window.URL.createObjectURL(blob);
+							audio.src = audioURL;
+							audio.setAttribute('controls', '');
+							audio.setAttribute('id', 'audioPreview');
+							document.getElementById('main').appendChild(audio);
+						};
+					}
+				})
+				.catch(err => {
+					console.log(err);
+				});
+		}
 	},
 	methods: {
 		sendMessage() {
 			let msg = {
+				Type: 'message',
 				Text: this.message,
 				User: this.user,
+				Chunks: '',
+			};
+			this.socket.send(JSON.stringify(msg));
+		},
+		sendAudioMessage() {
+			const encoded = String.fromCharCode(this.chunks);
+			let msg = {
+				Type: 'audio',
+				Text: '',
+				User: this.user,
+				Chunks: encoded,
 			};
 			this.socket.send(JSON.stringify(msg));
 		},
 		acceptMessage(msg) {
-			console.log(msg);
+			console.log(msg.data);
 			this.messages.push(JSON.parse(msg.data));
+		},
+		toggleRec(event) {
+			if (this.mediaRec.state == 'inactive') {
+				this.mediaRec.start();
+				event.target.style.background = 'red';
+				event.target.innerText = 'Stop Recording';
+			} else {
+				this.mediaRec.stop();
+				event.target.style.background = 'green';
+				event.target.innerText = 'Start Recording';
+			}
 		},
 	},
 };

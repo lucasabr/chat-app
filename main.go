@@ -45,7 +45,7 @@ func wsHandler(w http.ResponseWriter,  r *http.Request){
 	userToConn[user] = wsConn
 	
 	defer wsConn.Close()
-
+	 
 	for {
 		var msg Message 
 		

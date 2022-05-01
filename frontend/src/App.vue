@@ -5,11 +5,12 @@
 			<div v-if="message.User == this.user">
 				<!-- Add CSS -->
 				<p v-if="message.Type == 'message'">{{ message.User }}: {{ message.Text }}</p>
-				<audio v-else></audio>
+				<audio :src="message.Chunks" v-else controls></audio>
 			</div>
 			<div v-else>
 				<!-- Add CSS -->
-				<p>{{ message.User }}: {{ message.Text }}</p>
+				<p v-if="message.Type == 'message'">{{ message.User }}: {{ message.Text }}</p>
+				<audio :src="message.Chunks" v-else controls></audio>
 			</div>
 		</div>
 		<div>
@@ -51,11 +52,9 @@ export default {
 					if (this.mediaRec == null) {
 						this.mediaRec = new MediaRecorder(stream);
 						this.mediaRec.ondataavailable = e => this.chunks.push(e.data);
-						this.mediaRec.onstop = e => {
-							console.log(e);
+						this.mediaRec.onstop = () => {
 							const audio = document.createElement('audio');
 							const blob = new Blob(this.chunks, { type: 'audio/ogg; codecs=opus' });
-							this.chunks = [];
 							const audioURL = window.URL.createObjectURL(blob);
 							audio.src = audioURL;
 							audio.setAttribute('controls', '');
@@ -80,17 +79,19 @@ export default {
 			this.socket.send(JSON.stringify(msg));
 		},
 		sendAudioMessage() {
-			const encoded = String.fromCharCode(this.chunks);
+			const blob = new Blob(this.chunks, { type: 'audio/ogg; codecs=opus' });
+			const audioURL = window.URL.createObjectURL(blob);
 			let msg = {
 				Type: 'audio',
 				Text: '',
 				User: this.user,
-				Chunks: encoded,
+				Chunks: audioURL,
 			};
 			this.socket.send(JSON.stringify(msg));
+			this.chunks = [];
 		},
 		acceptMessage(msg) {
-			console.log(msg.data);
+			console.log(msg);
 			this.messages.push(JSON.parse(msg.data));
 		},
 		toggleRec(event) {

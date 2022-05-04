@@ -2,14 +2,16 @@
 	<div id="main" class="chatbox">
 		<h2>Anonymous Chat App</h2>
 		<div v-for="message in messages" :key="message.msg">
-			<div v-if="message.User == this.user">
+			<div class="message current" v-if="message.User == this.user">
 				<!-- Add CSS -->
-				<p v-if="message.Type == 'message'">{{ message.User }}: {{ message.Text }}</p>
+				<p class="user">{{ message.User }} (You)</p>
+				<p v-if="message.Type == 'message'">{{ message.Text }}</p>
 				<audio :src="message.Chunks" v-else controls></audio>
 			</div>
-			<div v-else>
+			<div class="message other" v-else>
 				<!-- Add CSS -->
-				<p v-if="message.Type == 'message'">{{ message.User }}: {{ message.Text }}</p>
+				<p class="user">{{ message.User }}</p>
+				<p v-if="message.Type == 'message'">{{ message.Text }}</p>
 				<audio :src="message.Chunks" v-else controls></audio>
 			</div>
 		</div>
@@ -21,6 +23,7 @@
 			<button v-on:click="toggleRec">Start Recording</button>
 			<button v-on:click="sendAudioMessage">Send</button>
 		</div>
+		<audio id="audio-preview" controls></audio>
 	</div>
 </template>
 
@@ -53,13 +56,9 @@ export default {
 						this.mediaRec = new MediaRecorder(stream);
 						this.mediaRec.ondataavailable = e => this.chunks.push(e.data);
 						this.mediaRec.onstop = () => {
-							const audio = document.createElement('audio');
 							const blob = new Blob(this.chunks, { type: 'audio/ogg; codecs=opus' });
 							const audioURL = window.URL.createObjectURL(blob);
-							audio.src = audioURL;
-							audio.setAttribute('controls', '');
-							audio.setAttribute('id', 'audioPreview');
-							document.getElementById('main').appendChild(audio);
+							document.getElementById('audio-preview').src = audioURL;
 						};
 					}
 				})
@@ -79,16 +78,16 @@ export default {
 			this.socket.send(JSON.stringify(msg));
 		},
 		sendAudioMessage() {
-			const blob = new Blob(this.chunks, { type: 'audio/ogg; codecs=opus' });
-			const audioURL = window.URL.createObjectURL(blob);
+			if (this.chunks.length == 0) return;
 			let msg = {
 				Type: 'audio',
 				Text: '',
 				User: this.user,
-				Chunks: audioURL,
+				Chunks: document.getElementById('audio-preview').src,
 			};
 			this.socket.send(JSON.stringify(msg));
 			this.chunks = [];
+			document.getElementById('audio-preview').src = '';
 		},
 		acceptMessage(msg) {
 			console.log(msg);
@@ -125,7 +124,6 @@ body {
 	justify-content: center;
 }
 .chatbox {
-	width: 350px;
 	border: 12px solid rgb(50, 158, 50);
 	border-radius: 15px;
 	padding-right: 10px;
@@ -133,31 +131,16 @@ body {
 	padding-top: 5px;
 	padding-bottom: 5px;
 }
-#message-container {
-	width: 80%;
-	max-width: 1200px;
+.message {
+	border-radius: 15px;
+	border: 2px solid white;
+	background-color: rgb(98, 93, 116);
+}
+.message p {
+	color: white;
 }
 
-#message-container div {
-	background-color: #ccc;
-	padding: 5px;
-}
-
-#message-container div:nth-child(2n) {
-	background-color: #fff;
-}
-
-#send-container {
-	position: fixed;
-	padding-bottom: 30px;
-	bottom: 0;
-	background-color: white;
-	max-width: 1200px;
-	width: 80%;
-	display: flex;
-}
-
-#message-input {
-	flex-grow: 1;
+.user {
+	font-size: 10px;
 }
 </style>

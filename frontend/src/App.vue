@@ -69,6 +69,7 @@ export default {
 	},
 	methods: {
 		sendMessage() {
+			if (this.message == '') return;
 			let msg = {
 				Type: 'message',
 				Text: this.message,
@@ -124,23 +125,37 @@ body {
 	justify-content: center;
 }
 .chatbox {
-	border: 12px solid rgb(50, 158, 50);
+	width: 500px;
+	border: 8px solid rgb(191, 196, 191);
 	border-radius: 15px;
 	padding-right: 10px;
 	padding-left: 10px;
 	padding-top: 5px;
 	padding-bottom: 5px;
+	position: relative;
+	background-color: #514872;
+}
+
+.chatbox h2 {
+	color: white;
 }
 .message {
 	border-radius: 15px;
 	border: 2px solid white;
-	background-color: rgb(98, 93, 116);
+	background-color: #625d74;
+	margin-top: 5px;
+	margin-bottom: 5px;
 }
 .message p {
 	color: white;
+	text-align: left;
+	position: relative;
+	left: 10px;
 }
 
 .user {
+	position: relative;
 	font-size: 10px;
+	left: 10px;
 }
 </style>
